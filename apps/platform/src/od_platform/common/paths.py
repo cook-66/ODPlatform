@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding:utf-8 -*-
 # @FileName  : paths.py
 # @Author    : ODPlatform Team
 # @Project   : ODPlatform
@@ -8,7 +7,6 @@
 #              - 引入 APP_DIR 概念,把【共享资产】和【端私有资产】分开
 
 from pathlib import Path
-from typing import List, Tuple
 
 # ============================================================
 # Workspace 根目录定位 (marker file 模式)
@@ -18,7 +16,7 @@ WORKSPACE_MARKER: str = ".odp-workspace"
 
 def _find_workspace_root(
     start: Path,
-    markers: Tuple[str, ...] = (WORKSPACE_MARKER,),
+    markers: tuple[str, ...] = (WORKSPACE_MARKER,),
 ) -> Path:
     """
     从 start 开始沿父目录向上查找,返回包含任一 marker 文件的目录。
@@ -55,11 +53,11 @@ DATA_DIR: Path = ROOT_DIR / "data"
 MODELS_DIR: Path = ROOT_DIR / "models"
 RUNS_DIR: Path = ROOT_DIR / "runs"
 
-PRETRAINED_MODELS_DIR: Path = MODELS_DIR / "pretrained"  
-TRAINED_MODELS_DIR: Path = MODELS_DIR / "trained"        
+PRETRAINED_MODELS_DIR: Path = MODELS_DIR / "pretrained"
+TRAINED_MODELS_DIR: Path = MODELS_DIR / "trained"
 
-RAW_DATA_DIR: Path = DATA_DIR / "raw"              
-PROCESSED_DATA_DIR: Path = DATA_DIR / "processed"  
+RAW_DATA_DIR: Path = DATA_DIR / "raw"
+PROCESSED_DATA_DIR: Path = DATA_DIR / "processed"
 
 
 # ============================================================
@@ -92,7 +90,7 @@ META_LOGGING_DIR: Path = META_DIR / "logs"
 # ============================================================
 # 对外暴露的"要初始化的目录列表" (init 清单)
 # ============================================================
-def get_dirs_to_initialize() -> List[Path]:
+def get_dirs_to_initialize() -> list[Path]:
     """
     返回项目启动时需要确保存在的所有目录列表。
     """
@@ -121,7 +119,7 @@ def get_dirs_to_initialize() -> List[Path]:
 # ============================================================
 # reset 专用清单 (白名单)  <-- 2.1 新增
 # ============================================================
-def get_dirs_to_reset() -> List[Path]:
+def get_dirs_to_reset() -> list[Path]:
     """
     返回 reset_project 可以安全清理的目录列表。
     """
@@ -136,18 +134,18 @@ def get_dirs_to_reset() -> List[Path]:
 # ============================================================
 # 【绝对保护目录】reset 工具永远不能删除这些 (黑名单兜底)  <-- 2.2 新增
 # ============================================================
-PROTECTED_DIRS: Tuple[Path, ...] = (
-    ROOT_DIR,                    
+PROTECTED_DIRS: tuple[Path, ...] = (
+    ROOT_DIR,
     ROOT_DIR / "apps",
     ROOT_DIR / "packages",
-    APP_DIR,                     
-    APP_DIR / "src",             
-    SCRIPTS_DIR,                 
-    DOCS_DIR,                    
-    UNIT_TEST_DIR,               
-    CONFIGS_DIR,                 
-    ROOT_DIR / ".git",           
-    ROOT_DIR / ".odp-workspace", 
+    APP_DIR,
+    APP_DIR / "src",
+    SCRIPTS_DIR,
+    DOCS_DIR,
+    UNIT_TEST_DIR,
+    CONFIGS_DIR,
+    ROOT_DIR / ".git",
+    ROOT_DIR / ".odp-workspace",
     # 工具元数据 (2.3 新增)
     META_DIR,
     META_LOGGING_DIR,

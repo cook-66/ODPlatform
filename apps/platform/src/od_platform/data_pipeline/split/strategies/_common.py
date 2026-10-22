@@ -1,7 +1,7 @@
 # apps/platform/src/od_platform/data_pipeline/split/strategies/_common.py
 """划分策略的公共小件:比例校验、三方计数、带种子洗牌。内部工具,不注册。"""
 import random
-from typing import Dict, List, Sequence, Tuple
+from collections.abc import Sequence
 
 from od_platform.common.constants import RATE_EPSILON
 
@@ -16,14 +16,14 @@ def validate_rates(train_rate: float, val_rate: float) -> float:
 
 
 def three_way_counts(n: int, train_rate: float, val_rate: float
-                     ) -> Tuple[int, int, int]:
+                     ) -> tuple[int, int, int]:
     """n 个样本按比例切成 (n_train, n_val, n_test);test 吃舍入余量,保证总和=n。"""
     n_train = min(n, max(0, round(n * train_rate)))
     n_val = min(n - n_train, max(0, round(n * val_rate)))
     return n_train, n_val, n - n_train - n_val
 
 
-def seeded_shuffled(seq: Sequence[str], rng: random.Random) -> List[str]:
+def seeded_shuffled(seq: Sequence[str], rng: random.Random) -> list[str]:
     """用调用方给的 rng 洗牌(种子由调用方掌控),返回新列表。"""
     out = list(seq)
     rng.shuffle(out)

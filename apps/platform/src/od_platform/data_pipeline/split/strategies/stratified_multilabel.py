@@ -7,7 +7,6 @@
 """
 import random
 from collections import Counter
-from typing import Dict, List, Set
 
 from od_platform.common.constants import SplitStrategy
 from od_platform.data_pipeline.split.registry import SplitOptions, register_strategy
@@ -16,7 +15,7 @@ from od_platform.data_pipeline.split.strategies._common import validate_rates
 _EPS = 1e-9
 
 
-def _argmax_tiebreak(primary: Dict[str, float], secondary: Dict[str, float],
+def _argmax_tiebreak(primary: dict[str, float], secondary: dict[str, float],
                      rng: random.Random) -> str:
     """按 primary 取最大;同分按 secondary 取最大;再同分 rng 随机。"""
     best_p = max(primary.values())
@@ -27,8 +26,8 @@ def _argmax_tiebreak(primary: Dict[str, float], secondary: Dict[str, float],
     return rng.choice(sorted(cands)) if len(cands) > 1 else cands[0]
 
 
-def iterative_stratify(sample_labels: List[Set[str]], proportions: List[float],
-                       random_state: int) -> List[int]:
+def iterative_stratify(sample_labels: list[set[str]], proportions: list[float],
+                       random_state: int) -> list[int]:
     """返回每个样本的 fold 下标(0..len(proportions)-1)。
 
     贪心迭代:按"样本最稀有标签的出现次数"升序处理;每张图分给它最稀有标签
@@ -41,9 +40,9 @@ def iterative_stratify(sample_labels: List[Set[str]], proportions: List[float],
     n_samples = len(sample_labels)
     fold_counts = [0] * n_folds
     fold_label_counts = [Counter() for _ in range(n_folds)]
-    fold_of: List[int] = [0] * n_samples
+    fold_of: list[int] = [0] * n_samples
 
-    def rarest(labels: Set[str]) -> float:
+    def rarest(labels: set[str]) -> float:
         return min((label_count[l] for l in labels), default=float("inf"))
 
     order = sorted(range(n_samples),
@@ -71,8 +70,8 @@ def iterative_stratify(sample_labels: List[Set[str]], proportions: List[float],
 
 
 @register_strategy(SplitStrategy.STRATIFIED_MULTILABEL, requires_labels=True)
-def stratified_multilabel_split(stems: List[str],
-                                options: SplitOptions) -> Dict[str, List[str]]:
+def stratified_multilabel_split(stems: list[str],
+                                options: SplitOptions) -> dict[str, list[str]]:
     test_rate = validate_rates(options.train_rate, options.val_rate)
     if options.labels_per_image is None:
         raise ValueError("stratified_multilabel 需要 labels_per_image")
@@ -81,7 +80,7 @@ def stratified_multilabel_split(stems: List[str],
     sample_labels = [set(options.labels_per_image.get(s, [])) for s in ordered]
     fold_of = iterative_stratify(sample_labels, proportions, options.random_state)
 
-    splits: Dict[str, List[str]] = {"train": [], "val": [], "test": []}
+    splits: dict[str, list[str]] = {"train": [], "val": [], "test": []}
     names = ["train", "val", "test"]
     for i, stem in enumerate(ordered):
         splits[names[fold_of[i]]].append(stem)

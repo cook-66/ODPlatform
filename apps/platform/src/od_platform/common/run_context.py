@@ -34,7 +34,7 @@ class RunContext:
         p.parent.mkdir(parents=True, exist_ok=True)
         return p
 
-    def __enter__(self) -> "RunContext":
+    def __enter__(self) -> RunContext:
         base, suffix = self.run_dir, 1
         while self.run_dir.exists():                  # 同秒冲突:run_id 加 -2/-3 后缀
             suffix += 1

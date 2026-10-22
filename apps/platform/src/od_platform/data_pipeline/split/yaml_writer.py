@@ -7,7 +7,6 @@ odp_meta 是"产品合格证":记录这份成品由谁、用什么配方产出,�
 from __future__ import annotations
 
 from pathlib import Path
-from typing import List
 
 import yaml
 
@@ -18,7 +17,7 @@ def write_dataset_yaml(
     yaml_path: Path,
     *,
     dataset_root: Path,
-    classes: List[str],
+    classes: list[str],
     manifest: SplitManifest,
     dataset_name: str,
     source_format: str,

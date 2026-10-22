@@ -6,7 +6,6 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import List
 
 from od_platform.data_pipeline.convert.registry import ConvertOptions, get_converter
 
@@ -16,7 +15,7 @@ def convert_data_to_yolo(
     output_labels_dir: Path,
     annotation_format: str,
     options: ConvertOptions,
-) -> List[str]:
+) -> list[str]:
     """把 input_dir 下的标注转换为 YOLO 标签,返回写出的类名列表。"""
     entry = get_converter(annotation_format)
     if not entry.supports(options.task):

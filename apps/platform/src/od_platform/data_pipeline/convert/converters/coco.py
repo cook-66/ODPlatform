@@ -5,18 +5,18 @@
 import json
 from collections import defaultdict
 from pathlib import Path
-from typing import List
 
 from od_platform.common.constants import AnnotationFormat, Task
 from od_platform.data_pipeline.convert.converters._geometry import (
-    normalize_box, normalize_polygon,
+    normalize_box,
+    normalize_polygon,
 )
 from od_platform.data_pipeline.convert.registry import ConvertOptions, register_converter
 
 
 @register_converter(AnnotationFormat.COCO, supported_tasks=(Task.DETECT, Task.SEGMENT))
 def convert_coco(input_dir: Path, output_labels_dir: Path,
-                 options: ConvertOptions) -> List[str]:
+                 options: ConvertOptions) -> list[str]:
     output_labels_dir.mkdir(parents=True, exist_ok=True)
     json_files = sorted(input_dir.glob("*.json"))
     if not json_files:
@@ -38,7 +38,7 @@ def convert_coco(input_dir: Path, output_labels_dir: Path,
     seg = options.task == Task.SEGMENT
     for img_id, im in img_info.items():
         W, H = float(im["width"]), float(im["height"])
-        lines: List[str] = []
+        lines: list[str] = []
         for a in per_image.get(img_id, []):
             name = cat[a["category_id"]]
             if name not in class_to_idx:

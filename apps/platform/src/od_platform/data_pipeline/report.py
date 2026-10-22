@@ -7,7 +7,6 @@ from __future__ import annotations
 import logging
 from collections import Counter
 from dataclasses import dataclass, field
-from typing import Dict, List
 
 from od_platform.common.constants import RARE_WARN_MIN_EXPECTED
 from od_platform.common.string_utils import format_table_row, format_table_separator
@@ -27,13 +26,13 @@ class ClassStat:
 class BalanceReport:
     total_images: int
     min_split_rate: float
-    stats: List[ClassStat] = field(default_factory=list)
-    rare: List[str] = field(default_factory=list)      # 稀有类名列表
+    stats: list[ClassStat] = field(default_factory=list)
+    rare: list[str] = field(default_factory=list)      # 稀有类名列表
 
 
 def analyze_balance(
-    per_image_classes: Dict[str, List[str]],
-    names: List[str],
+    per_image_classes: dict[str, list[str]],
+    names: list[str],
     min_split_rate: float,
     warn_min_expected: float = RARE_WARN_MIN_EXPECTED,
 ) -> BalanceReport:
@@ -54,7 +53,7 @@ def analyze_balance(
                          min_split_rate=min_split_rate, stats=stats, rare=rare)
 
 
-def format_report(report: BalanceReport) -> List[str]:
+def format_report(report: BalanceReport) -> list[str]:
     """渲染为文本行(复用 D1 的表格工具)。"""
     widths = [4, 12, 8, 8, 8, 12]
     lines = [format_table_separator(widths),

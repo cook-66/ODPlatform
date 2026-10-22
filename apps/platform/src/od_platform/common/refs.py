@@ -5,15 +5,16 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Optional
 
 from od_platform.common.paths import (
-    MODELS_DIR, PROCESSED_DATA_DIR, RAW_DATA_DIR,
+    MODELS_DIR,
+    PROCESSED_DATA_DIR,
+    RAW_DATA_DIR,
 )
 
 
 def resolve_ref(ref: str, *, base_dir: Path,
-                default_suffix: Optional[str] = None) -> Path:
+                default_suffix: str | None = None) -> Path:
     """把用户给的引用解析成实际路径。"""
     p = Path(ref)
     if p.is_absolute() or len(p.parts) > 1:      # 明确路径:直接解析

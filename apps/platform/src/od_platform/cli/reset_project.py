@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding:utf-8 -*-
 # @FileName  : reset_project.py
 # @Author    : ODPlatform Team
 # @Project   : ODPlatform
@@ -27,17 +26,16 @@ import subprocess
 import sys
 from pathlib import Path
 
+from od_platform.common.logging_utils import get_logger
 from od_platform.common.paths import (
-    ROOT_DIR,
-    META_LOGGING_DIR,             # 不再是 LOGGING_DIR:reset 的日志写到 reset 永不碰的地方
-    RAW_DATA_DIR,
+    META_LOGGING_DIR,  # 不再是 LOGGING_DIR:reset 的日志写到 reset 永不碰的地方
     PRETRAINED_MODELS_DIR,
+    RAW_DATA_DIR,
+    ROOT_DIR,
     get_dirs_to_reset,
     is_protected,
 )
-from od_platform.common.logging_utils import get_logger
 from od_platform.common.string_utils import format_table_row, format_table_separator
-
 
 logger = get_logger(
     base_path=META_LOGGING_DIR,       # 写到 .odp-meta/logs/(reset 永远不碰)
@@ -180,7 +178,7 @@ def _print_plan(
     logger.info("✅ 以下重要目录【不会】被动:")
     logger.info(f"  - 原始数据: {RAW_DATA_DIR.relative_to(ROOT_DIR)}/")
     logger.info(f"  - 预训练权重: {PRETRAINED_MODELS_DIR.relative_to(ROOT_DIR)}/")
-    logger.info(f"  - 所有代码、文档、配置(进 git 的)")
+    logger.info("  - 所有代码、文档、配置(进 git 的)")
 
 
 def _confirm(deletable_count: int) -> bool:

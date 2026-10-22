@@ -5,7 +5,6 @@
 检查的是"路由一致性",不是内容质量 —— 内容好坏留给 D4 质检。
 """
 from pathlib import Path
-from typing import List
 
 from od_platform.common.constants import AnnotationFormat, Task
 from od_platform.data_pipeline.convert.registry import ConvertOptions, register_converter
@@ -13,7 +12,7 @@ from od_platform.data_pipeline.convert.registry import ConvertOptions, register_
 
 @register_converter(AnnotationFormat.YOLO, supported_tasks=(Task.DETECT, Task.SEGMENT))
 def convert_yolo(input_dir: Path, output_labels_dir: Path,
-                 options: ConvertOptions) -> List[str]:
+                 options: ConvertOptions) -> list[str]:
     if not options.classes:
         raise ValueError(
             "yolo 格式不含类名,必须通过 options.classes 显式提供类别顺序。")
@@ -21,7 +20,7 @@ def convert_yolo(input_dir: Path, output_labels_dir: Path,
     seg = options.task == Task.SEGMENT
 
     for tf in sorted(input_dir.glob("*.txt")):
-        out_lines: List[str] = []
+        out_lines: list[str] = []
         for ln, raw in enumerate(tf.read_text(encoding="utf-8").splitlines(), 1):
             raw = raw.strip()
             if not raw:

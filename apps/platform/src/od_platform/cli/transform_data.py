@@ -6,12 +6,16 @@ from __future__ import annotations
 
 import argparse
 import sys
-from typing import List, Optional
 
 from od_platform.common import paths
 from od_platform.common.constants import (
-    AnnotationFormat, DEFAULT_RANDOM_STATE, DEFAULT_SPLIT_STRATEGY,
-    DEFAULT_TRAIN_RATE, DEFAULT_VAL_RATE, SplitStrategy, Task,
+    DEFAULT_RANDOM_STATE,
+    DEFAULT_SPLIT_STRATEGY,
+    DEFAULT_TRAIN_RATE,
+    DEFAULT_VAL_RATE,
+    AnnotationFormat,
+    SplitStrategy,
+    Task,
 )
 from od_platform.common.logging_utils import get_logger
 from od_platform.common.run_context import RunContext
@@ -41,7 +45,7 @@ def build_parser() -> argparse.ArgumentParser:
     return p
 
 
-def main(argv: Optional[List[str]] = None) -> int:
+def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     try:
         with RunContext("data_pipeline") as run:

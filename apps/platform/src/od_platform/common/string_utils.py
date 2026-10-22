@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding:utf-8 -*-
 # @FileName  : string_utils.py
 # @Author    : ODPlatform Team
 # @Project   : ODPlatform

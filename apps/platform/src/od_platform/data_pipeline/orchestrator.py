@@ -10,23 +10,32 @@ import logging
 import tempfile
 from collections import defaultdict
 from pathlib import Path
-from typing import Dict, List, Optional
 
 from od_platform.common import paths
 from od_platform.common.constants import (
-    COVERAGE_HARD_THRESHOLD, COVERAGE_SOFT_THRESHOLD, AnnotationFormat,
-    DEFAULT_RANDOM_STATE, DEFAULT_SPLIT_STRATEGY, DEFAULT_TRAIN_RATE, DEFAULT_VAL_RATE,
-    IMAGE_EXTENSIONS, Task,
+    COVERAGE_HARD_THRESHOLD,
+    COVERAGE_SOFT_THRESHOLD,
+    DEFAULT_RANDOM_STATE,
+    DEFAULT_SPLIT_STRATEGY,
+    DEFAULT_TRAIN_RATE,
+    DEFAULT_VAL_RATE,
+    IMAGE_EXTENSIONS,
+    AnnotationFormat,
+    Task,
 )
 from od_platform.common.lineage import SplitManifest
 from od_platform.common.run_context import RunContext
 from od_platform.data_pipeline.convert.registry import ConvertOptions
 from od_platform.data_pipeline.convert.service import convert_data_to_yolo
 from od_platform.data_pipeline.report import (
-    analyze_balance, format_report, warn_if_rare,
+    analyze_balance,
+    format_report,
+    warn_if_rare,
 )
 from od_platform.data_pipeline.split.materializer import (
-    SplitOutputDirs, SplitSourceDirs, materialize,
+    SplitOutputDirs,
+    SplitSourceDirs,
+    materialize,
 )
 from od_platform.data_pipeline.split.split_service import split_dataset
 from od_platform.data_pipeline.split.yaml_writer import write_dataset_yaml
@@ -47,10 +56,10 @@ class DatasetPipeline:
         task: str = Task.DETECT,
         train_rate: float = DEFAULT_TRAIN_RATE,
         val_rate: float = DEFAULT_VAL_RATE,
-        classes: Optional[List[str]] = None,
+        classes: list[str] | None = None,
         random_state: int = DEFAULT_RANDOM_STATE,
         split_strategy: str = DEFAULT_SPLIT_STRATEGY,
-        run: Optional[RunContext] = None,
+        run: RunContext | None = None,
     ):
         self.dataset = dataset
         self.annotation_format = annotation_format
@@ -107,13 +116,13 @@ class DatasetPipeline:
 
     # ---- 扫描:转换产物 → 内存结构 ----
 
-    def _scan(self, staging: Path, classes: List[str]):
-        image_index: Dict[str, Path] = {}
+    def _scan(self, staging: Path, classes: list[str]):
+        image_index: dict[str, Path] = {}
         for p in sorted(self.raw_images.rglob("*")):
             if p.suffix.lower() in IMAGE_EXTENSIONS:
                 image_index[p.stem] = p
-        labels_per_image: Dict[str, List[str]] = defaultdict(list)
-        label_bytes: Dict[str, bytes] = {}
+        labels_per_image: dict[str, list[str]] = defaultdict(list)
+        label_bytes: dict[str, bytes] = {}
         for txt in sorted(staging.glob("*.txt")):
             label_bytes[txt.stem] = txt.read_bytes()
             for line in txt.read_text(encoding="utf-8").splitlines():
@@ -125,13 +134,13 @@ class DatasetPipeline:
 
     # ---- 主流程 ----
 
-    def run(self) -> Dict[str, object]:
+    def run(self) -> dict[str, object]:
         if self._run_ctx is not None:
             return self._execute(self._run_ctx)
         with RunContext("data_pipeline") as run:
             return self._execute(run)
 
-    def _execute(self, run: RunContext) -> Dict[str, object]:
+    def _execute(self, run: RunContext) -> dict[str, object]:
         self._check_raw()
         out = SplitOutputDirs.for_dataset(self.dataset)
 

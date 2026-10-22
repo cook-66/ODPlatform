@@ -7,14 +7,16 @@
 from __future__ import annotations
 
 import warnings
-from dataclasses import dataclass, field
-from typing import Callable, Dict, List, Optional
+from collections.abc import Callable
+from dataclasses import dataclass
 
 from od_platform.common.constants import (
-    DEFAULT_RANDOM_STATE, DEFAULT_TRAIN_RATE, DEFAULT_VAL_RATE,
+    DEFAULT_RANDOM_STATE,
+    DEFAULT_TRAIN_RATE,
+    DEFAULT_VAL_RATE,
 )
 
-StrategyFunc = Callable[[List[str], "SplitOptions"], Dict[str, List[str]]]
+StrategyFunc = Callable[[list[str], "SplitOptions"], dict[str, list[str]]]
 
 
 @dataclass
@@ -23,8 +25,8 @@ class SplitOptions:
     train_rate: float = DEFAULT_TRAIN_RATE
     val_rate: float = DEFAULT_VAL_RATE
     random_state: int = DEFAULT_RANDOM_STATE
-    labels_per_image: Optional[Dict[str, List[str]]] = None   # 分层策略需要
-    group_per_image: Optional[Dict[str, str]] = None          # 分组策略需要(防泄漏)
+    labels_per_image: dict[str, list[str]] | None = None   # 分层策略需要
+    group_per_image: dict[str, str] | None = None          # 分组策略需要(防泄漏)
 
 
 @dataclass(frozen=True)
@@ -33,7 +35,7 @@ class StrategyEntry:
     requires_labels: bool = False
 
 
-_STRATEGIES: Dict[str, StrategyEntry] = {}
+_STRATEGIES: dict[str, StrategyEntry] = {}
 _LAZY_INITIALIZED = False
 
 
@@ -66,6 +68,6 @@ def get_strategy(name: str) -> StrategyEntry:
             f"未知划分策略: {name!r}。可用: {sorted(_STRATEGIES)}") from None
 
 
-def list_strategies() -> Dict[str, StrategyEntry]:
+def list_strategies() -> dict[str, StrategyEntry]:
     _lazy_init()
     return dict(_STRATEGIES)

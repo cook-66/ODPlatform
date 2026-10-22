@@ -7,34 +7,34 @@
 """
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Callable, Dict, List, Optional, Tuple
 
-ConverterFunc = Callable[[Path, Path, "ConvertOptions"], List[str]]
+ConverterFunc = Callable[[Path, Path, "ConvertOptions"], list[str]]
 
 
 @dataclass
 class ConvertOptions:
     """传给所有转换器的横切选项(参数包)。加新选项时这里加字段,签名不变。"""
     task: str = "detect"                        # detect / segment
-    classes: Optional[List[str]] = field(default=None)  # None=不过滤;[]=全排除;[...]=白名单
+    classes: list[str] | None = field(default=None)  # None=不过滤;[]=全排除;[...]=白名单
 
 
 @dataclass(frozen=True)
 class ConverterEntry:
     func: ConverterFunc
-    supported_tasks: Tuple[str, ...]            # 注册时声明的能力
+    supported_tasks: tuple[str, ...]            # 注册时声明的能力
 
     def supports(self, task: str) -> bool:
         return task in self.supported_tasks
 
 
-_CONVERTERS: Dict[str, ConverterEntry] = {}
+_CONVERTERS: dict[str, ConverterEntry] = {}
 _LAZY_INITIALIZED = False
 
 
-def register_converter(format_name: str, *, supported_tasks: Tuple[str, ...]):
+def register_converter(format_name: str, *, supported_tasks: tuple[str, ...]):
     """装饰器:把转换函数注册为某格式的入口,并声明它支持的任务。"""
     def deco(func: ConverterFunc) -> ConverterFunc:
         if format_name in _CONVERTERS:
@@ -66,6 +66,6 @@ def get_converter(format_name: str) -> ConverterEntry:
             f"不支持的标注格式: {format_name!r}。可用: {sorted(_CONVERTERS)}") from None
 
 
-def list_converters() -> Dict[str, ConverterEntry]:
+def list_converters() -> dict[str, ConverterEntry]:
     _lazy_init()
     return dict(_CONVERTERS)

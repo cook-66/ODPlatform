@@ -2,7 +2,6 @@
 """跨模块共享的纯定义:不加新值就永远是干净的依赖底层(可独立成包)。
 新增规则:值属于"两个以上子系统都要引用的业务决策"才进这里;子系统私有默认值留在子系统。
 """
-from typing import Tuple
 
 
 class AnnotationFormat:
@@ -12,7 +11,7 @@ class AnnotationFormat:
     YOLO = "yolo"
 
     @classmethod
-    def all(cls) -> Tuple[str, ...]:
+    def all(cls) -> tuple[str, ...]:
         return (cls.PASCAL_VOC, cls.COCO, cls.YOLO)
 
 
@@ -22,7 +21,7 @@ class Task:
     SEGMENT = "segment"
 
     @classmethod
-    def all(cls) -> Tuple[str, ...]:
+    def all(cls) -> tuple[str, ...]:
         return (cls.DETECT, cls.SEGMENT)
 
 
@@ -38,14 +37,14 @@ class SplitStrategy:
     STRATIFIED_MULTILABEL = "stratified_multilabel"
 
     @classmethod
-    def all(cls) -> Tuple[str, ...]:
+    def all(cls) -> tuple[str, ...]:
         return (cls.RANDOM, cls.STRATIFIED_MULTILABEL)
 
 
 DEFAULT_SPLIT_STRATEGY: str = SplitStrategy.RANDOM
 
 RARE_WARN_MIN_EXPECTED: float = 3.0    # 类别在最小 split 的期望样本量低于此值 → 稀有类预警
-IMAGE_EXTENSIONS: Tuple[str, ...] = (".jpg", ".jpeg", ".png", ".bmp", ".webp")
+IMAGE_EXTENSIONS: tuple[str, ...] = (".jpg", ".jpeg", ".png", ".bmp", ".webp")
 
 # 覆盖率前置闸门:转换前检查"标注数/图像数"。
 COVERAGE_HARD_THRESHOLD: float = 0.5   # 低于此值 → 直接拒跑(疑似导出中断/路径配错)

@@ -4,7 +4,6 @@
 """
 import xml.etree.ElementTree as ET
 from pathlib import Path
-from typing import List
 
 from od_platform.common.constants import AnnotationFormat, Task
 from od_platform.data_pipeline.convert.converters._geometry import normalize_box
@@ -13,7 +12,7 @@ from od_platform.data_pipeline.convert.registry import ConvertOptions, register_
 
 @register_converter(AnnotationFormat.PASCAL_VOC, supported_tasks=(Task.DETECT,))
 def convert_pascal_voc(input_dir: Path, output_labels_dir: Path,
-                       options: ConvertOptions) -> List[str]:
+                       options: ConvertOptions) -> list[str]:
     output_labels_dir.mkdir(parents=True, exist_ok=True)
     xml_files = sorted(input_dir.glob("*.xml"))
     if not xml_files:
@@ -34,7 +33,7 @@ def convert_pascal_voc(input_dir: Path, output_labels_dir: Path,
         size = root.find("size")
         W = float(size.findtext("width"))
         H = float(size.findtext("height"))
-        lines: List[str] = []
+        lines: list[str] = []
         for obj in root.iter("object"):
             name = obj.findtext("name", "").strip()
             if name not in class_to_idx:

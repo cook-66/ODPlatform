@@ -12,10 +12,9 @@ from __future__ import annotations
 
 import hashlib
 import json
-from dataclasses import asdict, dataclass, field
+from dataclasses import asdict, dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Tuple
 
 TOOL_VERSION = "odp-transform/0.4"       # 契约版本:指纹配方变动时升号
 
@@ -36,9 +35,9 @@ def compute_contract_fingerprint(
     dataset: str,
     strategy: str,
     seed: int,
-    ratios: Tuple[float, float, float],
-    names: List[str],
-    samples: List[SampleLineage],
+    ratios: tuple[float, float, float],
+    names: list[str],
+    samples: list[SampleLineage],
     tool_version: str = TOOL_VERSION,
 ) -> str:
     """对'配方 + 排序后的样本指纹行'做规范化 sha256。
@@ -66,9 +65,9 @@ class SplitManifest:
     dataset: str
     strategy: str
     seed: int
-    ratios: Tuple[float, float, float]
-    names: List[str]
-    samples: List[SampleLineage]
+    ratios: tuple[float, float, float]
+    names: list[str]
+    samples: list[SampleLineage]
     contract_fingerprint: str = ""
     created_at: str = ""
     tool_version: str = TOOL_VERSION
@@ -80,12 +79,12 @@ class SplitManifest:
         dataset: str,
         strategy: str,
         seed: int,
-        ratios: Tuple[float, float, float],
-        names: List[str],
-        splits: Dict[str, List[str]],
-        label_bytes: Dict[str, bytes],
+        ratios: tuple[float, float, float],
+        names: list[str],
+        splits: dict[str, list[str]],
+        label_bytes: dict[str, bytes],
         created_at: str = "",
-    ) -> "SplitManifest":
+    ) -> SplitManifest:
         """从划分结果 + 标签字节构建契约。label_bytes 以 stem 为键。"""
         samples = [
             SampleLineage(stem, split, _sha256_bytes(label_bytes[stem]))
@@ -100,10 +99,10 @@ class SplitManifest:
             dataset, strategy, seed, ratios, list(names), samples, m.tool_version)
         return m
 
-    def stems_of(self, split: str) -> List[str]:
+    def stems_of(self, split: str) -> list[str]:
         return [s.stem for s in self.samples if s.split == split]
 
-    def by_stem(self) -> Dict[str, SampleLineage]:
+    def by_stem(self) -> dict[str, SampleLineage]:
         return {s.stem: s for s in self.samples}
 
     # ---- 序列化 ----
@@ -116,7 +115,7 @@ class SplitManifest:
         path.write_text(self.to_json(), encoding="utf-8")
 
     @classmethod
-    def read(cls, path: Path) -> "SplitManifest":
+    def read(cls, path: Path) -> SplitManifest:
         d = json.loads(path.read_text(encoding="utf-8"))
         d["ratios"] = tuple(d["ratios"])
         d["samples"] = [SampleLineage(**s) for s in d["samples"]]
