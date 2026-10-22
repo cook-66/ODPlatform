@@ -179,3 +179,12 @@ def dataset_yaml_path(name: str) -> Path:
     return DATASET_CONFIGS_DIR / f"{name}.yaml"
 
 # 别忘了:把 DATASET_CONFIGS_DIR 加进 get_dirs_to_initialize() 的返回元组
+
+
+# apps/platform/src/od_platform/common/paths.py(D4 增量:追加到文件尾部)
+
+VALIDATION_RUNS_DIR: Path = RUNS_DIR / "data_validation"   # 质检报告的家(按需创建,不进 init 清单)
+
+
+def validation_run_dir(run_id: str) -> Path:
+    return VALIDATION_RUNS_DIR / run_id
