@@ -6,8 +6,8 @@
 """core 子包:数据类型、每源配置、抽象协议、注册表。"""
 from __future__ import annotations
 
-from .types import (
-    SourceType, FrameInfo, Frame, CameraIntrinsics,
+from .types  import (
+    SourceType, FrameInfo, Frame, CameraIntrinsics, EndReason, is_recoverable,
     IMAGE_EXTENSIONS, VIDEO_EXTENSIONS, STREAM_SCHEMES, is_stream_url,
 )
 from .config import (
@@ -15,17 +15,20 @@ from .config import (
     CameraBackend, CameraCodec,
 )
 from .base   import FrameSource
-from .registry import register_source, build_from_config
+from .registry import (
+    register_source, build_from_config, build_from_string, list_sources,
+)
 
 __all__ = [
     # 类型
     "SourceType", "FrameInfo", "Frame", "CameraIntrinsics",
     "IMAGE_EXTENSIONS", "VIDEO_EXTENSIONS", "STREAM_SCHEMES", "is_stream_url",
+    "EndReason", "is_recoverable",
     # 配置
     "SourceConfig", "CameraConfig", "VideoConfig", "ImageConfig", "ImageFolderConfig",
     "CameraBackend", "CameraCodec",
     # 协议
     "FrameSource",
     # 注册表
-    "register_source", "build_from_config",
+    "register_source", "build_from_config", "build_from_string", "list_sources",
 ]

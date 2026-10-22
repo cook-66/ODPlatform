@@ -4,15 +4,18 @@
 # @Project   : ODPlatform / frame_source
 # @Function  : 摄像头源 —— 跨平台后端协商 + 高帧率参数验证
 """
-摄像头输入源(CameraSource, 精简版)。
+摄像头输入源(CameraSource)。自注册, 登记字符串规则("0"/"1" 这类裸数字 = 默认 webcam)。
 
-三条撞墙(高帧率协商):
+三条撞墙(高帧率协商, 见讲义 §4.3):
     F①  高帧率必须先设编码 MJPG(裸 YUYV 带宽不够)
     F②  set() 只是请求, 必须 read() 一帧才触发驱动协商; 故 open() 里读一帧丢掉是必要动作
     F③  参数顺序: 编码 → 分辨率 → 帧率(MSMF 下顺序错高帧率失效)
 
 跨平台: backend 选 auto/msmf/dshow/v4l2。Windows 高帧率走 msmf, Linux 走 v4l2。
-摄像头是实时源, 精简版不再提供 stride 跳采。
+
+注意: 摄像头是实时源, 不支持 stride(见 set_stride 覆盖)。字符串糖只认裸数字并默认
+     映射到 CameraConfig(彩色 webcam); 深度/红外/双目这类同样是"0"的硬件不走字符串,
+     必须显式传各自的 config —— 这正是"配置类型做派发轴"的意义(讲义 §1.2、§3.1)。
 """
 from __future__ import annotations
 
@@ -25,7 +28,7 @@ import cv2
 from ..core.base     import FrameSource
 from ..core.config   import CameraConfig
 from ..core.registry import register_source
-from ..core.types    import Frame, FrameInfo, SourceType
+from ..core.types    import Frame, FrameInfo, SourceType, EndReason
 
 
 logger = logging.getLogger(__name__)
@@ -39,7 +42,11 @@ _BACKEND_FLAGS = {
 }
 
 
-@register_source(CameraConfig)
+@register_source(
+    CameraConfig,
+    str_matcher=lambda s: s.isdigit(),                       # 裸数字 = 默认彩色 webcam
+    str_to_config=lambda s: CameraConfig(camera_id=int(s)),
+)
 class CameraSource(FrameSource):
     """cv2 摄像头源, 带后端协商与参数验证。"""
 
@@ -51,6 +58,7 @@ class CameraSource(FrameSource):
     def open(self) -> bool:
         # 复位位置状态
         self._frame_index = 0
+        self._end_reason = EndReason.RUNNING              # ★ 结束语义
         cfg: CameraConfig = self.config
 
         backend_flag = _BACKEND_FLAGS.get(cfg.backend, cv2.CAP_ANY)
@@ -89,9 +97,11 @@ class CameraSource(FrameSource):
 
     def read(self) -> Optional[Frame]:
         if self._cap is None:
+            self._end_reason = EndReason.NOT_STARTED
             return None
         ret, img = self._cap.read()
         if not ret:
+            self._end_reason = EndReason.DISCONNECTED     # ★ 摄像头读失败 = 掉线, 可重连
             return None
 
         idx = self._frame_index
@@ -115,3 +125,11 @@ class CameraSource(FrameSource):
 
     def get_source_type(self) -> SourceType:
         return SourceType.CAMERA
+
+    def set_stride(self, stride: int) -> None:
+        # 摄像头是实时源, 跳采无意义; 覆盖基类, 不改变 self._stride(始终 1)
+        if stride != 1:
+            logger.warning(
+                "摄像头是实时源, 不支持 stride 跳采。"
+                "要降频请在消费端丢帧, 或用 ThreadedSource 始终取最新帧。"
+            )

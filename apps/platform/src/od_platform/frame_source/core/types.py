@@ -4,7 +4,7 @@
 # @Project   : ODPlatform / frame_source
 # @Function  : 核心数据类型 (SourceType / FrameInfo / Frame / CameraIntrinsics)
 """
-frame_source 核心数据类型定义(精简版)。
+frame_source 核心数据类型定义(多模态版)。
 
 一帧 = 一个"主视觉平面"(image)+ 一份元数据(info), 外加可选的副平面:
     - depth      : 深度图(RGBD 相机), 高频重要模态 → 一等字段
@@ -85,6 +85,13 @@ class FrameInfo:
         内置源传 SourceType.XXX(枚举成员本身是 str, 天然兼容);
         第三方源传自己的字符串(如 "depth")。
 
+    ⚠️ 关于 frame_index 与 stride 的关系:
+        frame_index 是**源帧号**, 不是"调用方收到的第几帧"。
+        - 普通迭代(stride=1):  0, 1, 2, 3, ...
+        - stride=N 跳采下:     0, N, 2N, 3N, ...(保留原始帧号)
+        理由: timestamp = frame_index / fps 才正确; 下游帧标注/回放对照需要原始帧号;
+             需要连续序号的调用方自行 enumerate。
+
     关于 timestamp 的语义差异(已知不一致, 故意保留):
         - CameraSource:                    墙钟时间(自 open 起经过的秒数)
         - VideoSource:                     媒体时间(frame_index / fps, 即在视频里的位置)
@@ -152,3 +159,20 @@ class Frame:
     @property
     def height(self) -> int:
         return self.info.height
+
+# ── 结束语义(上线加固): read() 返回 None 时, 用 end_reason 区分"停"与"断" ──
+class EndReason(str, Enum):
+    """一次迭代为何结束(继承 str 便于日志/序列化)。"""
+    NOT_STARTED  = "not_started"   # 尚未 open, 或 open 未成功
+    RUNNING      = "running"       # 正在出帧, 尚未结束
+    COMPLETED    = "completed"     # 干净读完(文件到尾 / 文件夹读尽)—— 不该重连
+    DISCONNECTED = "disconnected"  # 异常中断(网络流断开 / 设备掉线)—— 可重连
+    ERROR        = "error"         # 读取过程出错(如文件中途损坏)—— 可重试
+
+
+_RECOVERABLE: frozenset = frozenset({EndReason.DISCONNECTED, EndReason.ERROR})
+
+
+def is_recoverable(reason: "EndReason") -> bool:
+    """该结束原因是否值得重连/重试。COMPLETED 不值得(它本就该停), DISCONNECTED/ERROR 值得。"""
+    return reason in _RECOVERABLE

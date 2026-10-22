@@ -4,10 +4,10 @@
 # @Project   : ODPlatform / frame_source
 # @Function  : 图片源 —— 单张图片 (ImageSource) + 图片文件夹 (ImageFolderSource)
 """
-图片输入源(精简版)。
+图片输入源。两个类都自注册, 都登记字符串规则(路径能自证身份)。
 
 ImageSource       : 单张图片, read() 只产一帧(第二次返回 None)。
-ImageFolderSource : 文件夹, 按排序后的文件列表逐张产出。
+ImageFolderSource : 文件夹, 按排序后的文件列表逐张产出; stride 走索引跳转(零 IO)。
 
 统一零拷贝: read() 返回的 Frame.image 直接引用底层数组, 调用方需持久保存自行 .copy()。
 """
@@ -22,13 +22,18 @@ import cv2
 from ..core.base     import FrameSource
 from ..core.config   import ImageConfig, ImageFolderConfig
 from ..core.registry import register_source
-from ..core.types    import Frame, FrameInfo, SourceType, IMAGE_EXTENSIONS
+from ..core.types    import Frame, FrameInfo, SourceType, EndReason, IMAGE_EXTENSIONS, is_stream_url
 
 
 logger = logging.getLogger(__name__)
 
 
-@register_source(ImageConfig)
+@register_source(
+    ImageConfig,
+    # 能自证身份: 非 URL 且后缀属于图片扩展名(URL 一律排除, 交给视频源按流处理)
+    str_matcher=lambda s: (not is_stream_url(s)) and Path(s).suffix.lower() in IMAGE_EXTENSIONS,
+    str_to_config=lambda s: ImageConfig(path=s),
+)
 class ImageSource(FrameSource):
     """单张图片源。read() 只产一帧。"""
 
@@ -42,17 +47,21 @@ class ImageSource(FrameSource):
         # 复位位置状态(兑现"重新 open 即重头"契约)
         self._read_count = 0
         self._frame_index = 0
+        self._end_reason = EndReason.RUNNING              # ★ 结束语义
 
         self._image = cv2.imread(self._path)
         if self._image is None:
+            self._end_reason = EndReason.ERROR            # ★ 图读不出是错误
             logger.error(f"无法读取图片: {self._path}")
             return False
         return True
 
     def read(self) -> Optional[Frame]:
         if self._image is None:
+            self._end_reason = EndReason.NOT_STARTED      # ★ 未 open
             return None
         if self._read_count > 0:
+            self._end_reason = EndReason.COMPLETED        # ★ 已读完(单图就一帧)
             return None
         self._read_count += 1
 
@@ -74,8 +83,14 @@ class ImageSource(FrameSource):
     def get_source_type(self) -> SourceType:
         return SourceType.IMAGE
 
+    # 单图 stride 无意义(read 一帧即止), 沿用基类默认(set_stride 只登记不生效)
 
-@register_source(ImageFolderConfig)
+
+@register_source(
+    ImageFolderConfig,
+    str_matcher=lambda s: Path(s).is_dir(),      # 是已存在的目录 → 归文件夹源
+    str_to_config=lambda s: ImageFolderConfig(path=s),
+)
 class ImageFolderSource(FrameSource):
     """图片文件夹源。按排序后的文件列表逐张产出。"""
 
@@ -83,9 +98,11 @@ class ImageFolderSource(FrameSource):
         super().__init__(config)
         self._folder: str = config.path
         self._files: list[Path] = []
+        self._current_index: int = 0
 
     def open(self) -> bool:
         # 复位位置状态
+        self._current_index = 0
         self._frame_index = 0
 
         folder = Path(self._folder)
@@ -98,20 +115,26 @@ class ImageFolderSource(FrameSource):
             logger.warning(f"文件夹内没有支持的图片: {self._folder}")
             return False
         logger.info(f"文件夹共 {len(self._files)} 张图片: {self._folder}")
+        self._end_reason = EndReason.RUNNING              # ★ 成功扫描后置位
         return True
 
     def read(self) -> Optional[Frame]:
+        # stride: 跳过 stride-1 张(纯索引跳转, 零 IO)
+        if self._stride > 1 and self._current_index > 0:
+            self._current_index += self._stride - 1
+
         # 跳过读不出的坏图, 直到读到一张或耗尽
-        while self._frame_index < len(self._files):
-            path = self._files[self._frame_index]
+        while self._current_index < len(self._files):
+            path = self._files[self._current_index]
             img = cv2.imread(str(path))
             if img is None:
                 logger.warning(f"跳过无法读取的图片: {path}")
-                self._frame_index += 1
+                self._current_index += 1
                 continue
 
-            idx = self._frame_index
-            self._frame_index += 1
+            idx = self._current_index
+            self._current_index += 1
+            self._frame_index = idx
 
             h, w = img.shape[:2]
             info = FrameInfo(
@@ -124,6 +147,7 @@ class ImageFolderSource(FrameSource):
             )
             return Frame(image=img, info=info)   # 零拷贝
 
+        self._end_reason = EndReason.COMPLETED            # ★ 循环走完 = 读尽
         return None
 
     def close(self) -> None:
@@ -131,3 +155,18 @@ class ImageFolderSource(FrameSource):
 
     def get_source_type(self) -> SourceType:
         return SourceType.IMAGE_FOLDER
+
+    # ── 文件夹支持 seek(按文件索引跳转, 廉价)──
+    @property
+    def seekable(self) -> bool:
+        return True
+
+    def seek(self, frame: Optional[int] = None, time_sec: Optional[float] = None) -> bool:
+        if frame is None:
+            logger.warning("文件夹源只支持按帧索引 seek(frame=N)")
+            return False
+        if not (0 <= frame < len(self._files)):
+            logger.warning(f"seek 越界: {frame} 不在 [0, {len(self._files)})")
+            return False
+        self._current_index = frame
+        return True
