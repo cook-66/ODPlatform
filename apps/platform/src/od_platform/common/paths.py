@@ -55,6 +55,7 @@ RUNS_DIR: Path = ROOT_DIR / "runs"
 
 PRETRAINED_MODELS_DIR: Path = MODELS_DIR / "pretrained"
 TRAINED_MODELS_DIR: Path = MODELS_DIR / "trained"
+CHECKPOINTS_DIR: Path = MODELS_DIR / "checkpoints"   # D7: 训练中间检查点 / 外部权重
 
 RAW_DATA_DIR: Path = DATA_DIR / "raw"
 PROCESSED_DATA_DIR: Path = DATA_DIR / "processed"
@@ -101,6 +102,7 @@ def get_dirs_to_initialize() -> list[Path]:
         MODELS_DIR,
         PRETRAINED_MODELS_DIR,
         TRAINED_MODELS_DIR,
+        CHECKPOINTS_DIR,
         RAW_DATA_DIR,
         PROCESSED_DATA_DIR,
         # 端私有资产
